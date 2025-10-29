@@ -1,0 +1,170 @@
+{% extends "base.html" %}
+
+{% block title %}Result - Keyboard Visualizer{% endblock %}
+
+{% block content %}
+<div class="result-header">
+    <h2>✓ Visualization Complete!</h2>
+    <p>Successfully visualized {{ num_layers }} keyboard layers</p>
+</div>
+
+<div class="card">
+    <div class="view-tabs">
+        <button class="tab-btn active" onclick="showView('interactive')">🎮 Interactive View</button>
+        <button class="tab-btn" onclick="showView('static')">🖼️ Static Image</button>
+    </div>
+    
+    <div id="interactiveView" class="view-container">
+        <div class="interactive-frame-container">
+            <iframe src="{{ url_for('view_interactive', filename=html_filename) }}" 
+                    class="interactive-frame"
+                    frameborder="0"></iframe>
+        </div>
+        <div class="view-actions">
+            <a href="{{ url_for('view_interactive', filename=html_filename) }}" 
+               target="_blank" 
+               class="btn btn-primary">
+                🚀 Open in Full Screen
+            </a>
+            <a href="{{ url_for('download_file', filename=image_filename) }}" class="btn btn-secondary">
+                📥 Download PNG
+            </a>
+        </div>
+    </div>
+    
+    <div id="staticView" class="view-container" style="display: none;">
+        <div class="visualization-container">
+            <img src="{{ url_for('view_file', filename=image_filename) }}" 
+                 alt="Keyboard Layout Visualization" 
+                 class="visualization-image">
+        </div>
+        <div class="view-actions">
+            <a href="{{ url_for('view_file', filename=image_filename) }}" 
+               target="_blank" 
+               class="btn btn-primary">
+                🔍 View Full Size
+            </a>
+            <a href="{{ url_for('download_file', filename=image_filename) }}" class="btn btn-secondary">
+                📥 Download PNG
+            </a>
+        </div>
+    </div>
+
+    <div class="action-buttons">
+        <a href="{{ url_for('index') }}" class="btn btn-secondary">
+            ⬅️ Upload Another File
+        </a>
+    </div>
+</div>
+
+<style>
+.view-tabs {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+    border-bottom: 2px solid #e0e0e0;
+}
+
+.tab-btn {
+    padding: 12px 24px;
+    border: none;
+    background: none;
+    color: #666;
+    font-weight: 600;
+    font-size: 16px;
+    cursor: pointer;
+    border-bottom: 3px solid transparent;
+    transition: all 0.3s;
+}
+
+.tab-btn:hover {
+    color: #667eea;
+}
+
+.tab-btn.active {
+    color: #667eea;
+    border-bottom-color: #667eea;
+}
+
+.view-container {
+    animation: fadeIn 0.3s;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.interactive-frame-container {
+    width: 100%;
+    height: 80vh;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    margin-bottom: 15px;
+}
+
+.interactive-frame {
+    width: 100%;
+    height: 100%;
+    border: none;
+}
+
+.view-actions {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+}
+</style>
+
+<script>
+function showView(viewType) {
+    // Update tabs
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.classList.remove('active');
+    });
+    event.target.classList.add('active');
+    
+    // Update views
+    document.getElementById('interactiveView').style.display = 
+        viewType === 'interactive' ? 'block' : 'none';
+    document.getElementById('staticView').style.display = 
+        viewType === 'static' ? 'block' : 'none';
+}
+
+// Auto-open in full screen on first load (optional)
+window.addEventListener('load', function() {
+    // You can uncomment the next line to auto-open in new tab
+    // window.open('{{ url_for("view_interactive", filename=html_filename) }}', '_blank');
+});
+</script>
+
+<div class="legend-card">
+    <h3>Key Color Legend</h3>
+    <div class="legend-grid">
+        <div class="legend-item">
+            <span class="legend-color" style="background-color: #f0f0f0; border: 2px solid #cccccc;"></span>
+            <span>Transparent (▽)</span>
+        </div>
+        <div class="legend-item">
+            <span class="legend-color" style="background-color: #ffcccc; border: 2px solid #cc0000;"></span>
+            <span>Layer Keys (MO, LT)</span>
+        </div>
+        <div class="legend-item">
+            <span class="legend-color" style="background-color: #ccccff; border: 2px solid #0000cc;"></span>
+            <span>Layer Change (DF)</span>
+        </div>
+        <div class="legend-item">
+            <span class="legend-color" style="background-color: #ffffcc; border: 2px solid #cccc00;"></span>
+            <span>Modifier Combos (⇧⌃⌥⌘)</span>
+        </div>
+        <div class="legend-item">
+            <span class="legend-color" style="background-color: #e0e0e0; border: 2px solid #666666;"></span>
+            <span>Regular Keys</span>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

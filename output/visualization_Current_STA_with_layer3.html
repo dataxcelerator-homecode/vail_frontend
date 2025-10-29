@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Keyboard Layout</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+        
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .controls {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+        
+        .layer-selector {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        
+        .layer-btn {
+            padding: 10px 20px;
+            border: 2px solid #667eea;
+            background: white;
+            color: #667eea;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+        
+        .layer-btn:hover {
+            background: #f0f0ff;
+        }
+        
+        .layer-btn.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+            text-decoration: none;
+            display: inline-block;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        }
+        
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+        
+        .btn-secondary:hover {
+            background: #5a6268;
+        }
+        
+        .keyboard {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            overflow-x: auto;
+        }
+        
+        .keyboard-grid {
+            display: inline-block;
+            min-width: fit-content;
+        }
+        
+        .keyboard-row {
+            display: flex;
+            margin-bottom: 5px;
+        }
+        
+        .key {
+            width: 60px;
+            height: 60px;
+            margin: 2px;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            font-weight: 600;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            word-wrap: break-word;
+            padding: 4px;
+            position: relative;
+        }
+        
+        .key:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+        
+        .key:active {
+            transform: translateY(-1px);
+        }
+        
+        .key-tooltip {
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.9);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 10px;
+            white-space: nowrap;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s;
+            margin-bottom: 5px;
+            z-index: 1000;
+        }
+        
+        .key:hover .key-tooltip {
+            opacity: 1;
+        }
+        
+        .legend {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            margin-top: 20px;
+        }
+        
+        .legend h3 {
+            color: #667eea;
+            margin-bottom: 15px;
+        }
+        
+        .legend-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .legend-color {
+            width: 30px;
+            height: 30px;
+            border-radius: 6px;
+        }
+        
+        .info-box {
+            background: rgba(255,255,255,0.95);
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+            border-left: 4px solid #667eea;
+        }
+        
+        @media (max-width: 768px) {
+            .controls {
+                flex-direction: column;
+            }
+            
+            .key {
+                width: 45px;
+                height: 45px;
+                font-size: 9px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>⌨️ Interactive Keyboard Layout</h1>
+            <p>Click on keys to see details • Switch between layers</p>
+        </div>
+        
+        <div class="controls">
+            <div class="layer-selector">
+                <label style="font-weight: 600; color: #333;">Layer:</label>
+                <div id="layerButtons"></div>
+            </div>
+            
+            <div class="action-buttons">
+                <a href='/download/visualization_Current_STA_with_layer3.png' class='btn btn-primary'>📥 Download PNG</a>
+                <a href='/view/visualization_Current_STA_with_layer3.png' target='_blank' class='btn btn-secondary'>🖼️ View Static Image</a>
+                <button onclick="window.print()" class="btn btn-secondary">🖨️ Print</button>
+            </div>
+        </div>
+        
+        <div class="keyboard">
+            <div class="keyboard-grid" id="keyboardGrid"></div>
+        </div>
+        
+        <div class="info-box" id="keyInfo" style="display: none;">
+            <strong>Selected Key:</strong> <span id="keyDetails"></span>
+        </div>
+        
+        <div class="legend">
+            <h3>Key Legend</h3>
+            <div class="legend-grid">
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #f0f0f0; border: 2px solid #cccccc;"></div>
+                    <span>Transparent (▽)</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #ffcccc; border: 2px solid #cc0000;"></div>
+                    <span>Layer Keys (MO, LT)</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #ccccff; border: 2px solid #0000cc;"></div>
+                    <span>Layer Change (DF)</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #ffffcc; border: 2px solid #cccc00;"></div>
+                    <span>Modifier Combos (⇧⌃⌥⌘)</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #e0e0e0; border: 2px solid #666666;"></div>
+                    <span>Regular Keys</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        const layers = [[{"row": 0, "col": 0, "keycode": "GESC", "original": "KC_GESC", "faceColor": "#e0e0e0", "edgeColor": "#666666"}, {"row": 0, "col": 1, "keycode": "Q", "original": "KC_Q", "faceColor": "#e0e0e0", "edgeColor": "#666666"}, {"row": 0, "col": 2, "keycode": "W", "original": "KC_W", "faceColor": "#e0e0e0", "edgeColor": "#666666"}, {"row": 0, "col": 3, "keycode": "E", "original": "KC_E", "faceColor": "#e0e0e0", "edgeColor": "#666666"}, {"row": 0, "col": 4, "keycode": "R", "original": "KC_R", "faceColor": "#e0e0e0", "edgeColor": "#666666"}, {"row": 0, "col": 5, "keycode": "T", "original": "KC_T", "faceColor": "#e0e0e0", "edgeColor": "#666666"}, {"row": 0, "col": 6, "keycode": "RBRACKET", "original": "KC_RBRACKET", "faceColor": "#e0e0e0", "edgeColor": "#666666"}, {"row": 0, "col": 7, "keycode": "Y", "original": "KC_Y", "faceColor": "#e0e0e0", "edgeColor": "#666666"}, {"row": 0, "col": 8, "keycode": "U", "original": "KC_U", "faceColor": "#e0e0e0", "edgeColor": "#666666"}, {"row": 0, "col": 9, "keycode": "I", "original": "KC_I", "faceColor": "#e0e0e0", "edgeColor": "#666666"}, {"row": 0, "col": 10, "keycode": "O", "original": "KC_O", "faceColor": "#e0e0e0", "edgeColor": "#666666"}, {"row": 0, "col": 11, "keycode": "P", "original": "KC_P", "faceColor": "#e0e0e0", "edgeColor": "#666666"}, {"row": 1, "col": 0, "keycode": "MO(1)", "original": "MO(1)", "faceColor": "#ffcccc", "edgeColor": "#cc0000"}, {"row": 1, "col": 1, "keycode": "A", "original": "KC_A", "faceColor": "#e0e0e0", "edgeColor": "#666666"}, {"row": 1, "col": 2, "keycode": "S", "original": "KC_S", "faceColor": "#e0e0e0", "edgeColor": "#666666"}, {"row": 1, "col": 3, "keycode": "D", "original": "KC_D", "faceColor": "#e0e0e0", "edgeColor": "#666666"}, {"row": 1, "col": 4, "keycode": "F", "original": "KC_F", "faceColor": "#e0e0e0", "edgeColor": "#666666"}, {"row": 1, "col": 5, "keycode": "G", "original": "KC_G", "faceColor": "#e0e0e0", "edgeColor": "#666666"}, {"row": 1, "col": 6, "keycode": "RGUI", "original": "KC_RGUI", "faceColor": "#e0e0e0", "edgeColor": "#666666"}, {"row": 1, "col": 7, "keycode": "H", "original": "KC_H", "faceColor": "#e0e0e0", "edgeColor": "#666666"}, {"row": 1, "col": 8, "keycode": "J", "original": "KC_J", "faceColor": "#e0e0e0", "edgeColor": "#666666"}, {"row": 1, "col": 9, "keycode": "K", "original": "KC_K", "faceColor": "#e0e0e0", "edgeColor": "#666666"}, {"row": 1, "col": 10, "keycode": "L", "original": "KC_L", "faceColor": "#e0e0e0", "edgeColor": "#666666"}, {"row": 1, "col": 11, "keycode": "SCOLON", "original": "KC_SCOLON", "faceColor": "#e0e0e0", "edgeColor": "#666666"}, {"row": 2, "col": 0, "keycode": "⌘", "original": "KC_LGUI", "faceColor": "#ffffcc", "edgeColor": "#cccc00"}, {"row": 2, "col": 1, "keycode": "Z", "original": "KC_Z", "faceColor": "#e0e0e0", "edgeColor": "#666666"}, {"row": 2, "col": 2, "keycode": "X", "original": "KC_X", "faceColor": "#e0e0e0", "edgeColor": "#666666"}, {"row": 2, "col": 3, "keycode": "C", "original": "KC_C", "faceColor": "#e0e0e0", "edgeColor": "#666666"}, {"row": 2, "col": 4, "keycode": "V", "original": "KC_V", "faceColor": "#e0e0e0", "edgeColor": "#666666"}, {"row": 2, "col": 5, "keycode": "B", "original": "KC_B", "faceColor": "#e0e0e0", "edgeColor": "#666666"}, {"row": 2, "col": 7, "keycode": "N", "original": "KC_N", "faceColor": "#e0e0e0", "edgeColor": "#666666"}, {"row": 2, "col": 8, "keycode": "M", "original": "KC_M", "faceColor": "#e0e0e0", "edgeColor": "#666666"}, {"row": 2, "col": 9, "keycode": "COMMA", "original": "KC_COMMA", "faceColor": "#e0e0e0", "edgeColor": "#666666"}, {"row": 2, "col": 10, "keycode": "DOT", "original": "KC_DOT", "faceColor": "#e0e0e0", "edgeColor": "#666666"}, {"row": 2, "col": 11, "keycode": "SLASH", "original": "KC_SLASH", "faceColor": "#e0e0e0", "edgeColor": "#666666"}, {"row": 3, "col": 0, "keycode": "LBRACKET", "original": "KC_LBRACKET", "faceColor": "#e0e0e0", "edgeColor": "#666666"}, {"row": 3, "col": 1, "keycode": "LCTRL", "original": "KC_LCTRL", "faceColor": "#e0e0e0", "edgeColor": "#666666"}, {"row": 3, "col": 3, "keycode": "MO(3)", "original": "MO(3)", "faceColor": "#ffcccc", "edgeColor": "#cc0000"}, {"row": 3, "col": 4, "keycode": "BSPACE", "original": "KC_BSPACE", "faceColor": "#e0e0e0", "edgeColor": "#666666"}, {"row": 3, "col": 5, "keycode": "DELETE", "original": "KC_DELETE", "faceColor": "#e0e0e0", "edgeColor": "#666666"}, {"row": 3, "col": 6, "keycode": "ENTER", "original": "KC_ENTER", "faceColor": "#e0e0e0", "edgeColor": "#666666"}, {"row": 3, "col": 7, "keycode": "LT2(KC_SPACE)", "original": "LT2(KC_SPACE)", "faceColor": "#ffcccc", "edgeColor": "#cc0000"}, {"row": 3, "col": 8, "keycode": "MO(3)", "original": "MO(3)", "faceColor": "#ffcccc", "edgeColor": "#cc0000"}, {"row": 3, "col": 9, "keycode": "BSLASH", "original": "KC_BSLASH", "faceColor": "#e0e0e0", "edgeColor": "#666666"}, {"row": 3, "col": 10, "keycode": "QUOTE", "original": "KC_QUOTE", "faceColor": "#e0e0e0", "edgeColor": "#666666"}, {"row": 3, "col": 11, "keycode": "R⇧", "original": "KC_RSHIFT", "faceColor": "#ffffcc", "edgeColor": "#cccc00"}], [{"row": 0, "col": 0, "keycode": "TAB", "original": "KC_TAB", "faceColor": "#e0e0e0", "edgeColor": "#666666"}, {"row": 0, "col": 1, "keycode": "⌃(KC_⌥)", "original": "LCTL(KC_LALT)", "faceColor": "#ffffcc", "edgeColor": "#cccc00"}, {"row": 0, "col": 2, "keycode": "⌃(KC_⌘)", "original": "LCTL(KC_LGUI)", "faceColor": "#ffffcc", "edgeColor": "#cccc00"}, {"row": 0, "col": 3, "keycode": "⌘(KC_⌥)", "original": "LGUI(KC_LALT)", "faceColor": "#ffffcc", "edgeColor": "#cccc00"}, {"row": 0, "col": 4, "keycode": "WH_U", "original": "KC_WH_U", "faceColor": "#e0e0e0", "edgeColor": "#666666"}, {"row": 0, "col": 5, "keycode": "BTN1", "original": "KC_BTN1", "faceColor": "#e0e0e0", "edgeColor": "#666666"}, {"row": 0, "col": 6, "keycode": "⇧(KC_RBRACKET)", "original": "LSFT(KC_RBRACKET)", "faceColor": "#ffffcc", "edgeColor": "#cccc00"}, {"row": 0, "col": 7, "keycode": "GRAVE", "original": "KC_GRAVE", "faceColor": "#e0e0e0", "edgeColor": "#666666"}, {"row": 0, "col": 8, "keycode": "HOME", "original": "KC_HOME", "faceColor": "#e0e0e0", "edgeColor": "#666666"}, {"row": 0, "col": 9, "keycode": "PGDOWN", "original": "KC_PGDOWN", "faceColor": "#e0e0e0", "edgeColor": "#666666"}, {"row": 0, "col": 10, "keycode": "PGUP", "original": "KC_PGUP", "faceColor": "#e0e0e0", "edgeColor": "#666666"}, {"row": 0, "col": 11, "keycode": "END", "original": "KC_END", "faceColor": "#e0e0e0", "edgeColor": "#666666"}, {"row": 1, "col": 0, "keycode": "TAB", "original": "KC_TAB", "faceColor": "#e0e0e0", "edgeColor": "#666666"}, {"row": 1, "col": 1, "keycode": "LCTRL", "original": "KC_LCTRL", "faceColor": "#e0e0e0", "edgeColor": "#666666"}, {"row": 1, "col": 2, "keycode": "⌘", "original": "KC_LGUI", "faceColor": "#ffffcc", "edgeColor": "#cccc00"}, {"row": 1, "col": 3, "keycode": "⌥", "original": "KC_LALT", "faceColor": "#ffffcc", "edgeColor": "#cccc00"}, {"row": 1, "col": 4, "keycode": "WH_D", "original": "KC_WH_D", "faceColor": "#e0e0e0", "edgeColor": "#666666"}, {"row": 1, "col": 5, "keycode": "BTN2", "original": "KC_BTN2", "faceColor": "#e0e0e0", "edgeColor": "#666666"}, {"row": 1, "col": 6, "keycode": "⇧(KC_0)", "original": "LSFT(KC_0)", "faceColor": "#ffffcc", "edgeColor": "#cccc00"}, {"row": 1, "col": 7, "keycode": "⇧(KC_SCOLON)", "original": "LSFT(KC_SCOLON)", "faceColor": "#ffffcc", "edgeColor": "#cccc00"}, {"row": 1, "col": 8, "keycode": "LEFT", "original": "KC_LEFT", "faceColor": "#e0e0e0", "edgeColor": "#666666"}, {"row": 1, "col": 9, "keycode": "DOWN", "original": "KC_DOWN", "faceColor": "#e0e0e0", "edgeColor": "#666666"}, {"row": 1, "col": 10, "keycode": "UP", "original": "KC_UP", "faceColor": "#e0e0e0", "edgeColor": "#666666"}, {"row": 1, "col": 11, "keycode": "RIGHT", "original": "KC_RIGHT", "faceColor": "#e0e0e0", "edgeColor": "#666666"}, {"row": 2, "col": 0, "keycode": "R⇧", "original": "KC_RSHIFT", "faceColor": "#ffffcc", "edgeColor": "#cccc00"}, {"row": 2, "col": 1, "keycode": "⌘(KC_Z)", "original": "LGUI(KC_Z)", "faceColor": "#ffffcc", "edgeColor": "#cccc00"}, {"row": 2, "col": 2, "keycode": "⌘(KC_X)", "original": "LGUI(KC_X)", "faceColor": "#ffffcc", "edgeColor": "#cccc00"}, {"row": 2, "col": 3, "keycode": "⌘(KC_C)", "original": "LGUI(KC_C)", "faceColor": "#ffffcc", "edgeColor": "#cccc00"}, {"row": 2, "col": 4, "keycode": "⌘(KC_V)", "original": "LGUI(KC_V)", "faceColor": "#ffffcc", "edgeColor": "#cccc00"}, {"row": 2, "col": 5, "keycode": "⌘(KC_Y)", "original": "LGUI(KC_Y)", "faceColor": "#ffffcc", "edgeColor": "#cccc00"}, {"row": 2, "col": 7, "keycode": "SLASH", "original": "KC_SLASH", "faceColor": "#e0e0e0", "edgeColor": "#666666"}, {"row": 2, "col": 8, "keycode": "LBRACKET", "original": "KC_LBRACKET", "faceColor": "#e0e0e0", "edgeColor": "#666666"}, {"row": 2, "col": 9, "keycode": "⇧(KC_MINUS)", "original": "LSFT(KC_MINUS)", "faceColor": "#ffffcc", "edgeColor": "#cccc00"}, {"row": 2, "col": 10, "keycode": "⇧(KC_EQUAL)", "original": "LSFT(KC_EQUAL)", "faceColor": "#ffffcc", "edgeColor": "#cccc00"}, {"row": 2, "col": 11, "keycode": "RBRACKET", "original": "KC_RBRACKET", "faceColor": "#e0e0e0", "edgeColor": "#666666"}, {"row": 3, "col": 0, "keycode": "⇧(KC_LBRACKET)", "original": "LSFT(KC_LBRACKET)", "faceColor": "#ffffcc", "edgeColor": "#cccc00"}, {"row": 3, "col": 1, "keycode": "⇧(KC_9)", "original": "LSFT(KC_9)", "faceColor": "#ffffcc", "edgeColor": "#cccc00"}, {"row": 3, "col": 3, "keycode": "▽", "original": "KC_TRNS", "faceColor": "#f0f0f0", "edgeColor": "#cccccc"}, {"row": 3, "col": 4, "keycode": "R⇧", "original": "KC_RSHIFT", "faceColor": "#ffffcc", "edgeColor": "#cccc00"}, {"row": 3, "col": 5, "keycode": "⌥", "original": "KC_LALT", "faceColor": "#ffffcc", "edgeColor": "#cccc00"}, {"row": 3, "col": 6, "keycode": "R⇧", "original": "KC_RSHIFT", "faceColor": "#ffffcc", "edgeColor": "#cccc00"}, {"row": 3, "col": 7, "keycode": "TAB", "original": "KC_TAB", "faceColor": "#e0e0e0", "edgeColor": "#666666"}, {"row": 3, "col": 8, "keycode": "▽", "original": "KC_TRNS", "faceColor": "#f0f0f0", "edgeColor": "#cccccc"}, {"row": 3, "col": 9, "keycode": "EQUAL", "original": "KC_EQUAL", "faceColor": "#e0e0e0", "edgeColor": "#666666"}, {"row": 3, "col": 10, "keycode": "MINUS", "original": "KC_MINUS", "faceColor": "#e0e0e0", "edgeColor": "#666666"}, {"row": 3, "col": 11, "keycode": "R⇧", "original": "KC_RSHIFT", "faceColor": "#ffffcc", "edgeColor": "#cccc00"}], [{"row": 0, "col": 0, "keycode": "GRAVE", "original": "KC_GRAVE", "faceColor": "#e0e0e0", "edgeColor": "#666666"}, {"row": 0, "col": 1, "keycode": "1", "original": "KC_1", "faceColor": "#e0e0e0", "edgeColor": "#666666"}, {"row": 0, "col": 2, "keycode": "2", "original": "KC_2", "faceColor": "#e0e0e0", "edgeColor": "#666666"}, {"row": 0, "col": 3, "keycode": "3", "original": "KC_3", "faceColor": "#e0e0e0", "edgeColor": "#666666"}, {"row": 0, "col": 4, "keycode": "4", "original": "KC_4", "faceColor": "#e0e0e0", "edgeColor": "#666666"}, {"row": 0, "col": 5, "keycode": "5", "original": "KC_5", "faceColor": "#e0e0e0", "edgeColor": "#666666"}, {"row": 0, "col": 6, "keycode": "BTN1", "original": "KC_BTN1", "faceColor": "#e0e0e0", "edgeColor": "#666666"}, {"row": 0, "col": 7, "keycode": "6", "original": "KC_6", "faceColor": "#e0e0e0", "edgeColor": "#666666"}, {"row": 0, "col": 8, "keycode": "7", "original": "KC_7", "faceColor": "#e0e0e0", "edgeColor": "#666666"}, {"row": 0, "col": 9, "keycode": "8", "original": "KC_8", "faceColor": "#e0e0e0", "edgeColor": "#666666"}, {"row": 0, "col": 10, "keycode": "9", "original": "KC_9", "faceColor": "#e0e0e0", "edgeColor": "#666666"}, {"row": 0, "col": 11, "keycode": "0", "original": "KC_0", "faceColor": "#e0e0e0", "edgeColor": "#666666"}, {"row": 1, "col": 0, "keycode": "▽", "original": "KC_TRNS", "faceColor": "#f0f0f0", "edgeColor": "#cccccc"}, {"row": 1, "col": 1, "keycode": "⇧(KC_1)", "original": "LSFT(KC_1)", "faceColor": "#ffffcc", "edgeColor": "#cccc00"}, {"row": 1, "col": 2, "keycode": "⇧(KC_2)", "original": "LSFT(KC_2)", "faceColor": "#ffffcc", "edgeColor": "#cccc00"}, {"row": 1, "col": 3, "keycode": "⇧(KC_3)", "original": "LSFT(KC_3)", "faceColor": "#ffffcc", "edgeColor": "#cccc00"}, {"row": 1, "col": 4, "keycode": "⇧(KC_4)", "original": "LSFT(KC_4)", "faceColor": "#ffffcc", "edgeColor": "#cccc00"}, {"row": 1, "col": 5, "keycode": "⇧(KC_5)", "original": "LSFT(KC_5)", "faceColor": "#ffffcc", "edgeColor": "#cccc00"}, {"row": 1, "col": 6, "keycode": "BTN2", "original": "KC_BTN2", "faceColor": "#e0e0e0", "edgeColor": "#666666"}, {"row": 1, "col": 7, "keycode": "⇧(KC_6)", "original": "LSFT(KC_6)", "faceColor": "#ffffcc", "edgeColor": "#cccc00"}, {"row": 1, "col": 8, "keycode": "⇧(KC_7)", "original": "LSFT(KC_7)", "faceColor": "#ffffcc", "edgeColor": "#cccc00"}, {"row": 1, "col": 9, "keycode": "⇧(KC_8)", "original": "LSFT(KC_8)", "faceColor": "#ffffcc", "edgeColor": "#cccc00"}, {"row": 1, "col": 10, "keycode": "⇧(KC_9)", "original": "LSFT(KC_9)", "faceColor": "#ffffcc", "edgeColor": "#cccc00"}, {"row": 1, "col": 11, "keycode": "⇧(KC_0)", "original": "LSFT(KC_0)", "faceColor": "#ffffcc", "edgeColor": "#cccc00"}, {"row": 2, "col": 0, "keycode": "LSHIFT", "original": "KC_LSHIFT", "faceColor": "#e0e0e0", "edgeColor": "#666666"}, {"row": 2, "col": 1, "keycode": "▽", "original": "KC_TRNS", "faceColor": "#f0f0f0", "edgeColor": "#cccccc"}, {"row": 2, "col": 2, "keycode": "▽", "original": "KC_TRNS", "faceColor": "#f0f0f0", "edgeColor": "#cccccc"}, {"row": 2, "col": 3, "keycode": "▽", "original": "KC_TRNS", "faceColor": "#f0f0f0", "edgeColor": "#cccccc"}, {"row": 2, "col": 4, "keycode": "▽", "original": "KC_TRNS", "faceColor": "#f0f0f0", "edgeColor": "#cccccc"}, {"row": 2, "col": 5, "keycode": "▽", "original": "KC_TRNS", "faceColor": "#f0f0f0", "edgeColor": "#cccccc"}, {"row": 2, "col": 7, "keycode": "⇧(KC_EQUAL)", "original": "LSFT(KC_EQUAL)", "faceColor": "#ffffcc", "edgeColor": "#cccc00"}, {"row": 2, "col": 8, "keycode": "LBRACKET", "original": "KC_LBRACKET", "faceColor": "#e0e0e0", "edgeColor": "#666666"}, {"row": 2, "col": 9, "keycode": "⇧(KC_COMMA)", "original": "LSFT(KC_COMMA)", "faceColor": "#ffffcc", "edgeColor": "#cccc00"}, {"row": 2, "col": 10, "keycode": "LBRACKET", "original": "KC_LBRACKET", "faceColor": "#e0e0e0", "edgeColor": "#666666"}, {"row": 2, "col": 11, "keycode": "RBRACKET", "original": "KC_RBRACKET", "faceColor": "#e0e0e0", "edgeColor": "#666666"}, {"row": 3, "col": 0, "keycode": "▽", "original": "KC_TRNS", "faceColor": "#f0f0f0", "edgeColor": "#cccccc"}, {"row": 3, "col": 1, "keycode": "▽", "original": "KC_TRNS", "faceColor": "#f0f0f0", "edgeColor": "#cccccc"}, {"row": 3, "col": 3, "keycode": "▽", "original": "KC_TRNS", "faceColor": "#f0f0f0", "edgeColor": "#cccccc"}, {"row": 3, "col": 4, "keycode": "▽", "original": "KC_TRNS", "faceColor": "#f0f0f0", "edgeColor": "#cccccc"}, {"row": 3, "col": 5, "keycode": "DF(0)", "original": "DF(0)", "faceColor": "#ccccff", "edgeColor": "#0000cc"}, {"row": 3, "col": 6, "keycode": "▽", "original": "KC_TRNS", "faceColor": "#f0f0f0", "edgeColor": "#cccccc"}, {"row": 3, "col": 7, "keycode": "▽", "original": "KC_TRNS", "faceColor": "#f0f0f0", "edgeColor": "#cccccc"}, {"row": 3, "col": 8, "keycode": "▽", "original": "KC_TRNS", "faceColor": "#f0f0f0", "edgeColor": "#cccccc"}, {"row": 3, "col": 9, "keycode": "EQUAL", "original": "KC_EQUAL", "faceColor": "#e0e0e0", "edgeColor": "#666666"}, {"row": 3, "col": 10, "keycode": "MINUS", "original": "KC_MINUS", "faceColor": "#e0e0e0", "edgeColor": "#666666"}, {"row": 3, "col": 11, "keycode": "R⇧", "original": "KC_RSHIFT", "faceColor": "#ffffcc", "edgeColor": "#cccc00"}], [{"row": 0, "col": 0, "keycode": "TAB", "original": "KC_TAB", "faceColor": "#e0e0e0", "edgeColor": "#666666"}, {"row": 0, "col": 1, "keycode": "⇧(KC_1)", "original": "LSFT(KC_1)", "faceColor": "#ffffcc", "edgeColor": "#cccc00"}, {"row": 0, "col": 2, "keycode": "⇧(KC_2)", "original": "LSFT(KC_2)", "faceColor": "#ffffcc", "edgeColor": "#cccc00"}, {"row": 0, "col": 3, "keycode": "⇧(KC_3)", "original": "LSFT(KC_3)", "faceColor": "#ffffcc", "edgeColor": "#cccc00"}, {"row": 0, "col": 4, "keycode": "⇧(KC_4)", "original": "LSFT(KC_4)", "faceColor": "#ffffcc", "edgeColor": "#cccc00"}, {"row": 0, "col": 5, "keycode": "⇧(KC_5)", "original": "LSFT(KC_5)", "faceColor": "#ffffcc", "edgeColor": "#cccc00"}, {"row": 0, "col": 6, "keycode": "⇧(KC_5)", "original": "LSFT(KC_5)", "faceColor": "#ffffcc", "edgeColor": "#cccc00"}, {"row": 0, "col": 7, "keycode": "⇧(KC_LBRACKET)", "original": "LSFT(KC_LBRACKET)", "faceColor": "#ffffcc", "edgeColor": "#cccc00"}, {"row": 0, "col": 8, "keycode": "LBRACKET", "original": "KC_LBRACKET", "faceColor": "#e0e0e0", "edgeColor": "#666666"}, {"row": 0, "col": 9, "keycode": "⇧(KC_9)", "original": "LSFT(KC_9)", "faceColor": "#ffffcc", "edgeColor": "#cccc00"}, {"row": 0, "col": 10, "keycode": "⇧(KC_0)", "original": "LSFT(KC_0)", "faceColor": "#ffffcc", "edgeColor": "#cccc00"}, {"row": 0, "col": 11, "keycode": "RBRACKET", "original": "KC_RBRACKET", "faceColor": "#e0e0e0", "edgeColor": "#666666"}, {"row": 1, "col": 0, "keycode": "▽", "original": "KC_TRNS", "faceColor": "#f0f0f0", "edgeColor": "#cccccc"}, {"row": 1, "col": 1, "keycode": "▽", "original": "KC_TRNS", "faceColor": "#f0f0f0", "edgeColor": "#cccccc"}, {"row": 1, "col": 2, "keycode": "▽", "original": "KC_TRNS", "faceColor": "#f0f0f0", "edgeColor": "#cccccc"}, {"row": 1, "col": 3, "keycode": "▽", "original": "KC_TRNS", "faceColor": "#f0f0f0", "edgeColor": "#cccccc"}, {"row": 1, "col": 4, "keycode": "▽", "original": "KC_TRNS", "faceColor": "#f0f0f0", "edgeColor": "#cccccc"}, {"row": 1, "col": 5, "keycode": "▽", "original": "KC_TRNS", "faceColor": "#f0f0f0", "edgeColor": "#cccccc"}, {"row": 1, "col": 6, "keycode": "⇧(KC_SCOLON)", "original": "LSFT(KC_SCOLON)", "faceColor": "#ffffcc", "edgeColor": "#cccc00"}, {"row": 1, "col": 7, "keycode": "KP_PLUS", "original": "KC_KP_PLUS", "faceColor": "#e0e0e0", "edgeColor": "#666666"}, {"row": 1, "col": 8, "keycode": "KP_ASTERISK", "original": "KC_KP_ASTERISK", "faceColor": "#e0e0e0", "edgeColor": "#666666"}, {"row": 1, "col": 9, "keycode": "⇧(KC_MINUS)", "original": "LSFT(KC_MINUS)", "faceColor": "#ffffcc", "edgeColor": "#cccc00"}, {"row": 1, "col": 10, "keycode": "MINUS", "original": "KC_MINUS", "faceColor": "#e0e0e0", "edgeColor": "#666666"}, {"row": 1, "col": 11, "keycode": "KP_SLASH", "original": "KC_KP_SLASH", "faceColor": "#e0e0e0", "edgeColor": "#666666"}, {"row": 2, "col": 0, "keycode": "LSHIFT", "original": "KC_LSHIFT", "faceColor": "#e0e0e0", "edgeColor": "#666666"}, {"row": 2, "col": 1, "keycode": "UNDO", "original": "KC_UNDO", "faceColor": "#e0e0e0", "edgeColor": "#666666"}, {"row": 2, "col": 2, "keycode": "CUT", "original": "KC_CUT", "faceColor": "#e0e0e0", "edgeColor": "#666666"}, {"row": 2, "col": 3, "keycode": "COPY", "original": "KC_COPY", "faceColor": "#e0e0e0", "edgeColor": "#666666"}, {"row": 2, "col": 4, "keycode": "PSTE", "original": "KC_PSTE", "faceColor": "#e0e0e0", "edgeColor": "#666666"}, {"row": 2, "col": 5, "keycode": "AGIN", "original": "KC_AGIN", "faceColor": "#e0e0e0", "edgeColor": "#666666"}, {"row": 2, "col": 7, "keycode": "⇧(KC_7)", "original": "LSFT(KC_7)", "faceColor": "#ffffcc", "edgeColor": "#cccc00"}, {"row": 2, "col": 8, "keycode": "GRAVE", "original": "KC_GRAVE", "faceColor": "#e0e0e0", "edgeColor": "#666666"}, {"row": 2, "col": 9, "keycode": "BSLASH", "original": "KC_BSLASH", "faceColor": "#e0e0e0", "edgeColor": "#666666"}, {"row": 2, "col": 10, "keycode": "SLASH", "original": "KC_SLASH", "faceColor": "#e0e0e0", "edgeColor": "#666666"}, {"row": 2, "col": 11, "keycode": "⇧(KC_1)", "original": "LSFT(KC_1)", "faceColor": "#ffffcc", "edgeColor": "#cccc00"}, {"row": 3, "col": 0, "keycode": "▽", "original": "KC_TRNS", "faceColor": "#f0f0f0", "edgeColor": "#cccccc"}, {"row": 3, "col": 1, "keycode": "▽", "original": "KC_TRNS", "faceColor": "#f0f0f0", "edgeColor": "#cccccc"}, {"row": 3, "col": 3, "keycode": "▽", "original": "KC_TRNS", "faceColor": "#f0f0f0", "edgeColor": "#cccccc"}, {"row": 3, "col": 4, "keycode": "▽", "original": "KC_TRNS", "faceColor": "#f0f0f0", "edgeColor": "#cccccc"}, {"row": 3, "col": 5, "keycode": "▽", "original": "KC_TRNS", "faceColor": "#f0f0f0", "edgeColor": "#cccccc"}, {"row": 3, "col": 6, "keycode": "ENTER", "original": "KC_ENTER", "faceColor": "#e0e0e0", "edgeColor": "#666666"}, {"row": 3, "col": 7, "keycode": "▽", "original": "KC_TRNS", "faceColor": "#f0f0f0", "edgeColor": "#cccccc"}, {"row": 3, "col": 8, "keycode": "▽", "original": "KC_TRNS", "faceColor": "#f0f0f0", "edgeColor": "#cccccc"}, {"row": 3, "col": 9, "keycode": "⇧(KC_RBRACKET)", "original": "LSFT(KC_RBRACKET)", "faceColor": "#ffffcc", "edgeColor": "#cccc00"}, {"row": 3, "col": 10, "keycode": "KP_EQUAL", "original": "KC_KP_EQUAL", "faceColor": "#e0e0e0", "edgeColor": "#666666"}, {"row": 3, "col": 11, "keycode": "⇧(KC_6)", "original": "LSFT(KC_6)", "faceColor": "#ffffcc", "edgeColor": "#cccc00"}], [{"row": 0, "col": 0, "keycode": "▽", "original": "KC_TRNS", "faceColor": "#f0f0f0", "edgeColor": "#cccccc"}, {"row": 0, "col": 1, "keycode": "▽", "original": "KC_TRNS", "faceColor": "#f0f0f0", "edgeColor": "#cccccc"}, {"row": 0, "col": 2, "keycode": "▽", "original": "KC_TRNS", "faceColor": "#f0f0f0", "edgeColor": "#cccccc"}, {"row": 0, "col": 3, "keycode": "▽", "original": "KC_TRNS", "faceColor": "#f0f0f0", "edgeColor": "#cccccc"}, {"row": 0, "col": 4, "keycode": "▽", "original": "KC_TRNS", "faceColor": "#f0f0f0", "edgeColor": "#cccccc"}, {"row": 0, "col": 5, "keycode": "▽", "original": "KC_TRNS", "faceColor": "#f0f0f0", "edgeColor": "#cccccc"}, {"row": 0, "col": 6, "keycode": "▽", "original": "KC_TRNS", "faceColor": "#f0f0f0", "edgeColor": "#cccccc"}, {"row": 0, "col": 7, "keycode": "▽", "original": "KC_TRNS", "faceColor": "#f0f0f0", "edgeColor": "#cccccc"}, {"row": 0, "col": 8, "keycode": "BTN2", "original": "KC_BTN2", "faceColor": "#e0e0e0", "edgeColor": "#666666"}, {"row": 0, "col": 9, "keycode": "WH_D", "original": "KC_WH_D", "faceColor": "#e0e0e0", "edgeColor": "#666666"}, {"row": 0, "col": 10, "keycode": "WH_U", "original": "KC_WH_U", "faceColor": "#e0e0e0", "edgeColor": "#666666"}, {"row": 0, "col": 11, "keycode": "BTN1", "original": "KC_BTN1", "faceColor": "#e0e0e0", "edgeColor": "#666666"}, {"row": 1, "col": 0, "keycode": "▽", "original": "KC_TRNS", "faceColor": "#f0f0f0", "edgeColor": "#cccccc"}, {"row": 1, "col": 1, "keycode": "ACL2", "original": "KC_ACL2", "faceColor": "#e0e0e0", "edgeColor": "#666666"}, {"row": 1, "col": 2, "keycode": "ACL1", "original": "KC_ACL1", "faceColor": "#e0e0e0", "edgeColor": "#666666"}, {"row": 1, "col": 3, "keycode": "ACL0", "original": "KC_ACL0", "faceColor": "#e0e0e0", "edgeColor": "#666666"}, {"row": 1, "col": 4, "keycode": "▽", "original": "KC_TRNS", "faceColor": "#f0f0f0", "edgeColor": "#cccccc"}, {"row": 1, "col": 5, "keycode": "▽", "original": "KC_TRNS", "faceColor": "#f0f0f0", "edgeColor": "#cccccc"}, {"row": 1, "col": 6, "keycode": "▽", "original": "KC_TRNS", "faceColor": "#f0f0f0", "edgeColor": "#cccccc"}, {"row": 1, "col": 7, "keycode": "BTN2", "original": "KC_BTN2", "faceColor": "#e0e0e0", "edgeColor": "#666666"}, {"row": 1, "col": 8, "keycode": "MS_L", "original": "KC_MS_L", "faceColor": "#e0e0e0", "edgeColor": "#666666"}, {"row": 1, "col": 9, "keycode": "MS_D", "original": "KC_MS_D", "faceColor": "#e0e0e0", "edgeColor": "#666666"}, {"row": 1, "col": 10, "keycode": "MS_U", "original": "KC_MS_U", "faceColor": "#e0e0e0", "edgeColor": "#666666"}, {"row": 1, "col": 11, "keycode": "MS_R", "original": "KC_MS_R", "faceColor": "#e0e0e0", "edgeColor": "#666666"}, {"row": 2, "col": 0, "keycode": "LSHIFT", "original": "KC_LSHIFT", "faceColor": "#e0e0e0", "edgeColor": "#666666"}, {"row": 2, "col": 1, "keycode": "DF(1)", "original": "DF(1)", "faceColor": "#ccccff", "edgeColor": "#0000cc"}, {"row": 2, "col": 2, "keycode": "DF(2)", "original": "DF(2)", "faceColor": "#ccccff", "edgeColor": "#0000cc"}, {"row": 2, "col": 3, "keycode": "DF(3)", "original": "DF(3)", "faceColor": "#ccccff", "edgeColor": "#0000cc"}, {"row": 2, "col": 4, "keycode": "4", "original": "KC_4", "faceColor": "#e0e0e0", "edgeColor": "#666666"}, {"row": 2, "col": 5, "keycode": "DF(5)", "original": "DF(5)", "faceColor": "#ccccff", "edgeColor": "#0000cc"}, {"row": 2, "col": 7, "keycode": "▽", "original": "KC_TRNS", "faceColor": "#f0f0f0", "edgeColor": "#cccccc"}, {"row": 2, "col": 8, "keycode": "WH_L", "original": "KC_WH_L", "faceColor": "#e0e0e0", "edgeColor": "#666666"}, {"row": 2, "col": 9, "keycode": "BTN3", "original": "KC_BTN3", "faceColor": "#e0e0e0", "edgeColor": "#666666"}, {"row": 2, "col": 10, "keycode": "BTN4", "original": "KC_BTN4", "faceColor": "#e0e0e0", "edgeColor": "#666666"}, {"row": 2, "col": 11, "keycode": "WH_R", "original": "KC_WH_R", "faceColor": "#e0e0e0", "edgeColor": "#666666"}, {"row": 3, "col": 0, "keycode": "4", "original": "KC_4", "faceColor": "#e0e0e0", "edgeColor": "#666666"}, {"row": 3, "col": 1, "keycode": "▽", "original": "KC_TRNS", "faceColor": "#f0f0f0", "edgeColor": "#cccccc"}, {"row": 3, "col": 3, "keycode": "▽", "original": "KC_TRNS", "faceColor": "#f0f0f0", "edgeColor": "#cccccc"}, {"row": 3, "col": 4, "keycode": "▽", "original": "KC_TRNS", "faceColor": "#f0f0f0", "edgeColor": "#cccccc"}, {"row": 3, "col": 5, "keycode": "DF(0)", "original": "DF(0)", "faceColor": "#ccccff", "edgeColor": "#0000cc"}, {"row": 3, "col": 6, "keycode": "▽", "original": "KC_TRNS", "faceColor": "#f0f0f0", "edgeColor": "#cccccc"}, {"row": 3, "col": 7, "keycode": "▽", "original": "KC_TRNS", "faceColor": "#f0f0f0", "edgeColor": "#cccccc"}, {"row": 3, "col": 8, "keycode": "▽", "original": "KC_TRNS", "faceColor": "#f0f0f0", "edgeColor": "#cccccc"}, {"row": 3, "col": 9, "keycode": "BTN1", "original": "KC_BTN1", "faceColor": "#e0e0e0", "edgeColor": "#666666"}, {"row": 3, "col": 10, "keycode": "BTN1", "original": "KC_BTN1", "faceColor": "#e0e0e0", "edgeColor": "#666666"}, {"row": 3, "col": 11, "keycode": "BTN5", "original": "KC_BTN5", "faceColor": "#e0e0e0", "edgeColor": "#666666"}], [{"row": 0, "col": 0, "keycode": "ESCAPE", "original": "KC_ESCAPE", "faceColor": "#e0e0e0", "edgeColor": "#666666"}, {"row": 0, "col": 1, "keycode": "F1", "original": "KC_F1", "faceColor": "#e0e0e0", "edgeColor": "#666666"}, {"row": 0, "col": 2, "keycode": "F2", "original": "KC_F2", "faceColor": "#e0e0e0", "edgeColor": "#666666"}, {"row": 0, "col": 3, "keycode": "F3", "original": "KC_F3", "faceColor": "#e0e0e0", "edgeColor": "#666666"}, {"row": 0, "col": 4, "keycode": "F4", "original": "KC_F4", "faceColor": "#e0e0e0", "edgeColor": "#666666"}, {"row": 0, "col": 5, "keycode": "F5", "original": "KC_F5", "faceColor": "#e0e0e0", "edgeColor": "#666666"}, {"row": 0, "col": 6, "keycode": "▽", "original": "KC_TRNS", "faceColor": "#f0f0f0", "edgeColor": "#cccccc"}, {"row": 0, "col": 7, "keycode": "F6", "original": "KC_F6", "faceColor": "#e0e0e0", "edgeColor": "#666666"}, {"row": 0, "col": 8, "keycode": "F7", "original": "KC_F7", "faceColor": "#e0e0e0", "edgeColor": "#666666"}, {"row": 0, "col": 9, "keycode": "F8", "original": "KC_F8", "faceColor": "#e0e0e0", "edgeColor": "#666666"}, {"row": 0, "col": 10, "keycode": "F9", "original": "KC_F9", "faceColor": "#e0e0e0", "edgeColor": "#666666"}, {"row": 0, "col": 11, "keycode": "F10", "original": "KC_F10", "faceColor": "#e0e0e0", "edgeColor": "#666666"}, {"row": 1, "col": 0, "keycode": "TAB", "original": "KC_TAB", "faceColor": "#e0e0e0", "edgeColor": "#666666"}, {"row": 1, "col": 1, "keycode": "UNDO", "original": "KC_UNDO", "faceColor": "#e0e0e0", "edgeColor": "#666666"}, {"row": 1, "col": 2, "keycode": "CUT", "original": "KC_CUT", "faceColor": "#e0e0e0", "edgeColor": "#666666"}, {"row": 1, "col": 3, "keycode": "COPY", "original": "KC_COPY", "faceColor": "#e0e0e0", "edgeColor": "#666666"}, {"row": 1, "col": 4, "keycode": "PSTE", "original": "KC_PSTE", "faceColor": "#e0e0e0", "edgeColor": "#666666"}, {"row": 1, "col": 5, "keycode": "AGIN", "original": "KC_AGIN", "faceColor": "#e0e0e0", "edgeColor": "#666666"}, {"row": 1, "col": 6, "keycode": "▽", "original": "KC_TRNS", "faceColor": "#f0f0f0", "edgeColor": "#cccccc"}, {"row": 1, "col": 7, "keycode": "PSTE", "original": "KC_PSTE", "faceColor": "#e0e0e0", "edgeColor": "#666666"}, {"row": 1, "col": 8, "keycode": "LEFT", "original": "KC_LEFT", "faceColor": "#e0e0e0", "edgeColor": "#666666"}, {"row": 1, "col": 9, "keycode": "DOWN", "original": "KC_DOWN", "faceColor": "#e0e0e0", "edgeColor": "#666666"}, {"row": 1, "col": 10, "keycode": "UP", "original": "KC_UP", "faceColor": "#e0e0e0", "edgeColor": "#666666"}, {"row": 1, "col": 11, "keycode": "RIGHT", "original": "KC_RIGHT", "faceColor": "#e0e0e0", "edgeColor": "#666666"}, {"row": 2, "col": 0, "keycode": "R⇧", "original": "KC_RSHIFT", "faceColor": "#ffffcc", "edgeColor": "#cccc00"}, {"row": 2, "col": 1, "keycode": "DF(1)", "original": "DF(1)", "faceColor": "#ccccff", "edgeColor": "#0000cc"}, {"row": 2, "col": 2, "keycode": "DF(2)", "original": "DF(2)", "faceColor": "#ccccff", "edgeColor": "#0000cc"}, {"row": 2, "col": 3, "keycode": "DF(3)", "original": "DF(3)", "faceColor": "#ccccff", "edgeColor": "#0000cc"}, {"row": 2, "col": 4, "keycode": "DF(4)", "original": "DF(4)", "faceColor": "#ccccff", "edgeColor": "#0000cc"}, {"row": 2, "col": 5, "keycode": "5", "original": "KC_5", "faceColor": "#e0e0e0", "edgeColor": "#666666"}, {"row": 2, "col": 7, "keycode": "MPLY", "original": "KC_MPLY", "faceColor": "#e0e0e0", "edgeColor": "#666666"}, {"row": 2, "col": 8, "keycode": "MRWD", "original": "KC_MRWD", "faceColor": "#e0e0e0", "edgeColor": "#666666"}, {"row": 2, "col": 9, "keycode": "_VOLDOWN", "original": "KC__VOLDOWN", "faceColor": "#e0e0e0", "edgeColor": "#666666"}, {"row": 2, "col": 10, "keycode": "_VOLUP", "original": "KC__VOLUP", "faceColor": "#e0e0e0", "edgeColor": "#666666"}, {"row": 2, "col": 11, "keycode": "MFFD", "original": "KC_MFFD", "faceColor": "#e0e0e0", "edgeColor": "#666666"}, {"row": 3, "col": 0, "keycode": "5", "original": "KC_5", "faceColor": "#e0e0e0", "edgeColor": "#666666"}, {"row": 3, "col": 1, "keycode": "▽", "original": "KC_TRNS", "faceColor": "#f0f0f0", "edgeColor": "#cccccc"}, {"row": 3, "col": 3, "keycode": "▽", "original": "KC_TRNS", "faceColor": "#f0f0f0", "edgeColor": "#cccccc"}, {"row": 3, "col": 4, "keycode": "▽", "original": "KC_TRNS", "faceColor": "#f0f0f0", "edgeColor": "#cccccc"}, {"row": 3, "col": 5, "keycode": "DF(0)", "original": "DF(0)", "faceColor": "#ccccff", "edgeColor": "#0000cc"}, {"row": 3, "col": 6, "keycode": "▽", "original": "KC_TRNS", "faceColor": "#f0f0f0", "edgeColor": "#cccccc"}, {"row": 3, "col": 7, "keycode": "▽", "original": "KC_TRNS", "faceColor": "#f0f0f0", "edgeColor": "#cccccc"}, {"row": 3, "col": 8, "keycode": "▽", "original": "KC_TRNS", "faceColor": "#f0f0f0", "edgeColor": "#cccccc"}, {"row": 3, "col": 9, "keycode": "▽", "original": "KC_TRNS", "faceColor": "#f0f0f0", "edgeColor": "#cccccc"}, {"row": 3, "col": 10, "keycode": "COPY", "original": "KC_COPY", "faceColor": "#e0e0e0", "edgeColor": "#666666"}, {"row": 3, "col": 11, "keycode": "MSTP", "original": "KC_MSTP", "faceColor": "#e0e0e0", "edgeColor": "#666666"}], [{"row": 0, "col": 0, "keycode": "▽", "original": "KC_TRNS", "faceColor": "#f0f0f0", "edgeColor": "#cccccc"}, {"row": 0, "col": 1, "keycode": "▽", "original": "KC_TRNS", "faceColor": "#f0f0f0", "edgeColor": "#cccccc"}, {"row": 0, "col": 2, "keycode": "▽", "original": "KC_TRNS", "faceColor": "#f0f0f0", "edgeColor": "#cccccc"}, {"row": 0, "col": 3, "keycode": "▽", "original": "KC_TRNS", "faceColor": "#f0f0f0", "edgeColor": "#cccccc"}, {"row": 0, "col": 4, "keycode": "▽", "original": "KC_TRNS", "faceColor": "#f0f0f0", "edgeColor": "#cccccc"}, {"row": 0, "col": 5, "keycode": "▽", "original": "KC_TRNS", "faceColor": "#f0f0f0", "edgeColor": "#cccccc"}, {"row": 0, "col": 6, "keycode": "▽", "original": "KC_TRNS", "faceColor": "#f0f0f0", "edgeColor": "#cccccc"}, {"row": 0, "col": 7, "keycode": "▽", "original": "KC_TRNS", "faceColor": "#f0f0f0", "edgeColor": "#cccccc"}, {"row": 0, "col": 8, "keycode": "▽", "original": "KC_TRNS", "faceColor": "#f0f0f0", "edgeColor": "#cccccc"}, {"row": 0, "col": 9, "keycode": "▽", "original": "KC_TRNS", "faceColor": "#f0f0f0", "edgeColor": "#cccccc"}, {"row": 0, "col": 10, "keycode": "▽", "original": "KC_TRNS", "faceColor": "#f0f0f0", "edgeColor": "#cccccc"}, {"row": 0, "col": 11, "keycode": "▽", "original": "KC_TRNS", "faceColor": "#f0f0f0", "edgeColor": "#cccccc"}, {"row": 1, "col": 0, "keycode": "▽", "original": "KC_TRNS", "faceColor": "#f0f0f0", "edgeColor": "#cccccc"}, {"row": 1, "col": 1, "keycode": "▽", "original": "KC_TRNS", "faceColor": "#f0f0f0", "edgeColor": "#cccccc"}, {"row": 1, "col": 2, "keycode": "▽", "original": "KC_TRNS", "faceColor": "#f0f0f0", "edgeColor": "#cccccc"}, {"row": 1, "col": 3, "keycode": "▽", "original": "KC_TRNS", "faceColor": "#f0f0f0", "edgeColor": "#cccccc"}, {"row": 1, "col": 4, "keycode": "▽", "original": "KC_TRNS", "faceColor": "#f0f0f0", "edgeColor": "#cccccc"}, {"row": 1, "col": 5, "keycode": "▽", "original": "KC_TRNS", "faceColor": "#f0f0f0", "edgeColor": "#cccccc"}, {"row": 1, "col": 6, "keycode": "▽", "original": "KC_TRNS", "faceColor": "#f0f0f0", "edgeColor": "#cccccc"}, {"row": 1, "col": 7, "keycode": "▽", "original": "KC_TRNS", "faceColor": "#f0f0f0", "edgeColor": "#cccccc"}, {"row": 1, "col": 8, "keycode": "▽", "original": "KC_TRNS", "faceColor": "#f0f0f0", "edgeColor": "#cccccc"}, {"row": 1, "col": 9, "keycode": "▽", "original": "KC_TRNS", "faceColor": "#f0f0f0", "edgeColor": "#cccccc"}, {"row": 1, "col": 10, "keycode": "▽", "original": "KC_TRNS", "faceColor": "#f0f0f0", "edgeColor": "#cccccc"}, {"row": 1, "col": 11, "keycode": "▽", "original": "KC_TRNS", "faceColor": "#f0f0f0", "edgeColor": "#cccccc"}, {"row": 2, "col": 0, "keycode": "▽", "original": "KC_TRNS", "faceColor": "#f0f0f0", "edgeColor": "#cccccc"}, {"row": 2, "col": 1, "keycode": "▽", "original": "KC_TRNS", "faceColor": "#f0f0f0", "edgeColor": "#cccccc"}, {"row": 2, "col": 2, "keycode": "▽", "original": "KC_TRNS", "faceColor": "#f0f0f0", "edgeColor": "#cccccc"}, {"row": 2, "col": 3, "keycode": "▽", "original": "KC_TRNS", "faceColor": "#f0f0f0", "edgeColor": "#cccccc"}, {"row": 2, "col": 4, "keycode": "▽", "original": "KC_TRNS", "faceColor": "#f0f0f0", "edgeColor": "#cccccc"}, {"row": 2, "col": 5, "keycode": "▽", "original": "KC_TRNS", "faceColor": "#f0f0f0", "edgeColor": "#cccccc"}, {"row": 2, "col": 7, "keycode": "▽", "original": "KC_TRNS", "faceColor": "#f0f0f0", "edgeColor": "#cccccc"}, {"row": 2, "col": 8, "keycode": "▽", "original": "KC_TRNS", "faceColor": "#f0f0f0", "edgeColor": "#cccccc"}, {"row": 2, "col": 9, "keycode": "▽", "original": "KC_TRNS", "faceColor": "#f0f0f0", "edgeColor": "#cccccc"}, {"row": 2, "col": 10, "keycode": "▽", "original": "KC_TRNS", "faceColor": "#f0f0f0", "edgeColor": "#cccccc"}, {"row": 2, "col": 11, "keycode": "▽", "original": "KC_TRNS", "faceColor": "#f0f0f0", "edgeColor": "#cccccc"}, {"row": 3, "col": 0, "keycode": "▽", "original": "KC_TRNS", "faceColor": "#f0f0f0", "edgeColor": "#cccccc"}, {"row": 3, "col": 1, "keycode": "▽", "original": "KC_TRNS", "faceColor": "#f0f0f0", "edgeColor": "#cccccc"}, {"row": 3, "col": 3, "keycode": "▽", "original": "KC_TRNS", "faceColor": "#f0f0f0", "edgeColor": "#cccccc"}, {"row": 3, "col": 4, "keycode": "▽", "original": "KC_TRNS", "faceColor": "#f0f0f0", "edgeColor": "#cccccc"}, {"row": 3, "col": 5, "keycode": "▽", "original": "KC_TRNS", "faceColor": "#f0f0f0", "edgeColor": "#cccccc"}, {"row": 3, "col": 6, "keycode": "▽", "original": "KC_TRNS", "faceColor": "#f0f0f0", "edgeColor": "#cccccc"}, {"row": 3, "col": 7, "keycode": "▽", "original": "KC_TRNS", "faceColor": "#f0f0f0", "edgeColor": "#cccccc"}, {"row": 3, "col": 8, "keycode": "▽", "original": "KC_TRNS", "faceColor": "#f0f0f0", "edgeColor": "#cccccc"}, {"row": 3, "col": 9, "keycode": "▽", "original": "KC_TRNS", "faceColor": "#f0f0f0", "edgeColor": "#cccccc"}, {"row": 3, "col": 10, "keycode": "▽", "original": "KC_TRNS", "faceColor": "#f0f0f0", "edgeColor": "#cccccc"}, {"row": 3, "col": 11, "keycode": "▽", "original": "KC_TRNS", "faceColor": "#f0f0f0", "edgeColor": "#cccccc"}], [{"row": 0, "col": 0, "keycode": "▽", "original": "KC_TRNS", "faceColor": "#f0f0f0", "edgeColor": "#cccccc"}, {"row": 0, "col": 1, "keycode": "▽", "original": "KC_TRNS", "faceColor": "#f0f0f0", "edgeColor": "#cccccc"}, {"row": 0, "col": 2, "keycode": "▽", "original": "KC_TRNS", "faceColor": "#f0f0f0", "edgeColor": "#cccccc"}, {"row": 0, "col": 3, "keycode": "▽", "original": "KC_TRNS", "faceColor": "#f0f0f0", "edgeColor": "#cccccc"}, {"row": 0, "col": 4, "keycode": "▽", "original": "KC_TRNS", "faceColor": "#f0f0f0", "edgeColor": "#cccccc"}, {"row": 0, "col": 5, "keycode": "▽", "original": "KC_TRNS", "faceColor": "#f0f0f0", "edgeColor": "#cccccc"}, {"row": 0, "col": 6, "keycode": "▽", "original": "KC_TRNS", "faceColor": "#f0f0f0", "edgeColor": "#cccccc"}, {"row": 0, "col": 7, "keycode": "▽", "original": "KC_TRNS", "faceColor": "#f0f0f0", "edgeColor": "#cccccc"}, {"row": 0, "col": 8, "keycode": "▽", "original": "KC_TRNS", "faceColor": "#f0f0f0", "edgeColor": "#cccccc"}, {"row": 0, "col": 9, "keycode": "▽", "original": "KC_TRNS", "faceColor": "#f0f0f0", "edgeColor": "#cccccc"}, {"row": 0, "col": 10, "keycode": "▽", "original": "KC_TRNS", "faceColor": "#f0f0f0", "edgeColor": "#cccccc"}, {"row": 0, "col": 11, "keycode": "▽", "original": "KC_TRNS", "faceColor": "#f0f0f0", "edgeColor": "#cccccc"}, {"row": 1, "col": 0, "keycode": "▽", "original": "KC_TRNS", "faceColor": "#f0f0f0", "edgeColor": "#cccccc"}, {"row": 1, "col": 1, "keycode": "▽", "original": "KC_TRNS", "faceColor": "#f0f0f0", "edgeColor": "#cccccc"}, {"row": 1, "col": 2, "keycode": "▽", "original": "KC_TRNS", "faceColor": "#f0f0f0", "edgeColor": "#cccccc"}, {"row": 1, "col": 3, "keycode": "▽", "original": "KC_TRNS", "faceColor": "#f0f0f0", "edgeColor": "#cccccc"}, {"row": 1, "col": 4, "keycode": "▽", "original": "KC_TRNS", "faceColor": "#f0f0f0", "edgeColor": "#cccccc"}, {"row": 1, "col": 5, "keycode": "▽", "original": "KC_TRNS", "faceColor": "#f0f0f0", "edgeColor": "#cccccc"}, {"row": 1, "col": 6, "keycode": "▽", "original": "KC_TRNS", "faceColor": "#f0f0f0", "edgeColor": "#cccccc"}, {"row": 1, "col": 7, "keycode": "▽", "original": "KC_TRNS", "faceColor": "#f0f0f0", "edgeColor": "#cccccc"}, {"row": 1, "col": 8, "keycode": "▽", "original": "KC_TRNS", "faceColor": "#f0f0f0", "edgeColor": "#cccccc"}, {"row": 1, "col": 9, "keycode": "▽", "original": "KC_TRNS", "faceColor": "#f0f0f0", "edgeColor": "#cccccc"}, {"row": 1, "col": 10, "keycode": "▽", "original": "KC_TRNS", "faceColor": "#f0f0f0", "edgeColor": "#cccccc"}, {"row": 1, "col": 11, "keycode": "▽", "original": "KC_TRNS", "faceColor": "#f0f0f0", "edgeColor": "#cccccc"}, {"row": 2, "col": 0, "keycode": "▽", "original": "KC_TRNS", "faceColor": "#f0f0f0", "edgeColor": "#cccccc"}, {"row": 2, "col": 1, "keycode": "▽", "original": "KC_TRNS", "faceColor": "#f0f0f0", "edgeColor": "#cccccc"}, {"row": 2, "col": 2, "keycode": "▽", "original": "KC_TRNS", "faceColor": "#f0f0f0", "edgeColor": "#cccccc"}, {"row": 2, "col": 3, "keycode": "▽", "original": "KC_TRNS", "faceColor": "#f0f0f0", "edgeColor": "#cccccc"}, {"row": 2, "col": 4, "keycode": "▽", "original": "KC_TRNS", "faceColor": "#f0f0f0", "edgeColor": "#cccccc"}, {"row": 2, "col": 5, "keycode": "▽", "original": "KC_TRNS", "faceColor": "#f0f0f0", "edgeColor": "#cccccc"}, {"row": 2, "col": 7, "keycode": "▽", "original": "KC_TRNS", "faceColor": "#f0f0f0", "edgeColor": "#cccccc"}, {"row": 2, "col": 8, "keycode": "▽", "original": "KC_TRNS", "faceColor": "#f0f0f0", "edgeColor": "#cccccc"}, {"row": 2, "col": 9, "keycode": "▽", "original": "KC_TRNS", "faceColor": "#f0f0f0", "edgeColor": "#cccccc"}, {"row": 2, "col": 10, "keycode": "▽", "original": "KC_TRNS", "faceColor": "#f0f0f0", "edgeColor": "#cccccc"}, {"row": 2, "col": 11, "keycode": "▽", "original": "KC_TRNS", "faceColor": "#f0f0f0", "edgeColor": "#cccccc"}, {"row": 3, "col": 0, "keycode": "▽", "original": "KC_TRNS", "faceColor": "#f0f0f0", "edgeColor": "#cccccc"}, {"row": 3, "col": 1, "keycode": "▽", "original": "KC_TRNS", "faceColor": "#f0f0f0", "edgeColor": "#cccccc"}, {"row": 3, "col": 3, "keycode": "▽", "original": "KC_TRNS", "faceColor": "#f0f0f0", "edgeColor": "#cccccc"}, {"row": 3, "col": 4, "keycode": "▽", "original": "KC_TRNS", "faceColor": "#f0f0f0", "edgeColor": "#cccccc"}, {"row": 3, "col": 5, "keycode": "▽", "original": "KC_TRNS", "faceColor": "#f0f0f0", "edgeColor": "#cccccc"}, {"row": 3, "col": 6, "keycode": "▽", "original": "KC_TRNS", "faceColor": "#f0f0f0", "edgeColor": "#cccccc"}, {"row": 3, "col": 7, "keycode": "▽", "original": "KC_TRNS", "faceColor": "#f0f0f0", "edgeColor": "#cccccc"}, {"row": 3, "col": 8, "keycode": "▽", "original": "KC_TRNS", "faceColor": "#f0f0f0", "edgeColor": "#cccccc"}, {"row": 3, "col": 9, "keycode": "▽", "original": "KC_TRNS", "faceColor": "#f0f0f0", "edgeColor": "#cccccc"}, {"row": 3, "col": 10, "keycode": "▽", "original": "KC_TRNS", "faceColor": "#f0f0f0", "edgeColor": "#cccccc"}, {"row": 3, "col": 11, "keycode": "▽", "original": "KC_TRNS", "faceColor": "#f0f0f0", "edgeColor": "#cccccc"}]];
+        const maxRows = 4;
+        const maxCols = 12;
+        let currentLayer = 0;
+        
+        function initializeLayerButtons() {
+            const container = document.getElementById('layerButtons');
+            for (let i = 0; i < layers.length; i++) {
+                const btn = document.createElement('button');
+                btn.className = 'layer-btn' + (i === 0 ? ' active' : '');
+                btn.textContent = `Layer ${i}`;
+                btn.onclick = () => switchLayer(i);
+                container.appendChild(btn);
+            }
+        }
+        
+        function switchLayer(layerIndex) {
+            currentLayer = layerIndex;
+            
+            // Update button states
+            document.querySelectorAll('.layer-btn').forEach((btn, idx) => {
+                btn.classList.toggle('active', idx === layerIndex);
+            });
+            
+            // Render the layer
+            renderLayer(layerIndex);
+        }
+        
+        function renderLayer(layerIndex) {
+            const grid = document.getElementById('keyboardGrid');
+            grid.innerHTML = '';
+            
+            const layer = layers[layerIndex];
+            
+            // Create a 2D array for the grid
+            const keyGrid = Array(maxRows).fill(null).map(() => Array(maxCols).fill(null));
+            
+            // Place keys in the grid
+            layer.forEach(key => {
+                keyGrid[key.row][key.col] = key;
+            });
+            
+            // Render the grid
+            keyGrid.forEach(row => {
+                const rowDiv = document.createElement('div');
+                rowDiv.className = 'keyboard-row';
+                
+                row.forEach(key => {
+                    const keyDiv = document.createElement('div');
+                    keyDiv.className = 'key';
+                    
+                    if (key) {
+                        keyDiv.style.backgroundColor = key.faceColor;
+                        keyDiv.style.border = `2px solid ${key.edgeColor}`;
+                        keyDiv.textContent = key.keycode;
+                        
+                        // Add tooltip
+                        const tooltip = document.createElement('div');
+                        tooltip.className = 'key-tooltip';
+                        tooltip.textContent = key.original;
+                        keyDiv.appendChild(tooltip);
+                        
+                        // Add click handler
+                        keyDiv.onclick = () => showKeyInfo(key);
+                    } else {
+                        keyDiv.style.visibility = 'hidden';
+                    }
+                    
+                    rowDiv.appendChild(keyDiv);
+                });
+                
+                grid.appendChild(rowDiv);
+            });
+        }
+        
+        function showKeyInfo(key) {
+            const infoBox = document.getElementById('keyInfo');
+            const details = document.getElementById('keyDetails');
+            details.innerHTML = `
+                <strong>${key.keycode}</strong> 
+                (Original: <code>${key.original}</code>) 
+                - Position: Row ${key.row}, Col ${key.col}
+            `;
+            infoBox.style.display = 'block';
+        }
+        
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            initializeLayerButtons();
+            renderLayer(0);
+        });
+        
+        // Keyboard shortcuts
+        document.addEventListener('keydown', (e) => {
+            if (e.key >= '0' && e.key <= '9') {
+                const layerNum = parseInt(e.key);
+                if (layerNum < layers.length) {
+                    switchLayer(layerNum);
+                }
+            } else if (e.key === 'ArrowLeft') {
+                switchLayer(Math.max(0, currentLayer - 1));
+            } else if (e.key === 'ArrowRight') {
+                switchLayer(Math.min(layers.length - 1, currentLayer + 1));
+            }
+        });
+    </script>
+</body>
+</html>

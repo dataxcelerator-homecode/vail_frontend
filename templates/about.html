@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+
+{% block title %}About - Keyboard Visualizer{% endblock %}
+
+{% block content %}
+<div class="hero">
+    <h2>About Keyboard Visualizer</h2>
+    <p>A professional tool for visualizing Vial keyboard configurations</p>
+</div>
+
+<div class="card">
+    <h3>Features</h3>
+    <ul class="feature-list">
+        <li>📊 <strong>Multi-layer visualization:</strong> See all your keyboard layers at once</li>
+        <li>🎨 <strong>Color-coded keys:</strong> Easy identification of key types and functions</li>
+        <li>🔄 <strong>Keycode transformation:</strong> Replace keycodes before visualization</li>
+        <li>💾 <strong>High-quality output:</strong> PNG images suitable for documentation</li>
+        <li>⚡ <strong>Fast processing:</strong> Generate visualizations in seconds</li>
+        <li>🔐 <strong>Privacy-focused:</strong> All processing happens locally</li>
+    </ul>
+</div>
+
+<div class="card">
+    <h3>Symbol Legend</h3>
+    <table class="symbol-table">
+        <tr>
+            <th>Symbol</th>
+            <th>Meaning</th>
+        </tr>
+        <tr>
+            <td>▽</td>
+            <td>Transparent key (KC_TRNS)</td>
+        </tr>
+        <tr>
+            <td>✗</td>
+            <td>No key (KC_NO)</td>
+        </tr>
+        <tr>
+            <td>⇧</td>
+            <td>Shift modifier</td>
+        </tr>
+        <tr>
+            <td>⌃</td>
+            <td>Control modifier</td>
+        </tr>
+        <tr>
+            <td>⌥</td>
+            <td>Alt/Option modifier</td>
+        </tr>
+        <tr>
+            <td>⌘</td>
+            <td>GUI/Command modifier</td>
+        </tr>
+    </table>
+</div>
+
+<div class="card">
+    <h3>Usage Example</h3>
+    <p>Command-line interface is also available:</p>
+    <pre><code># Basic usage
+python cli.py input.vil output.png
+
+# With keycode transformation
+python cli.py input.vil output.png --rename-layer 4 --rename-old KC_TRNS --rename-new KC_NO
+
+# Enable debug logging
+python cli.py input.vil output.png --debug</code></pre>
+</div>
+
+<div class="card">
+    <h3>Technology Stack</h3>
+    <div class="tech-stack">
+        <span class="tech-badge">Python 3</span>
+        <span class="tech-badge">Flask</span>
+        <span class="tech-badge">Matplotlib</span>
+        <span class="tech-badge">QMK/Vial</span>
+    </div>
+</div>
+{% endblock %}
+

@@ -1,0 +1,599 @@
+"""
+Interactive HTML keyboard visualization module.
+"""
+
+from typing import List, Dict
+from ..utils.keycode_simplifier import simplify_keycode, get_key_color
+from ..utils.logger import get_logger
+
+logger = get_logger(__name__)
+
+
+class InteractiveVisualizer:
+    """Generates interactive HTML visualizations of keyboard layers."""
+    
+    def __init__(self, layers: List[List[List[str]]], max_rows: int, max_cols: int):
+        """
+        Initialize the interactive visualizer.
+        
+        Args:
+            layers: List of all layers to visualize
+            max_rows: Maximum number of rows
+            max_cols: Maximum number of columns
+        """
+        self.layers = layers
+        self.max_rows = max_rows
+        self.max_cols = max_cols
+        logger.info(f"Initializing interactive visualizer for {len(layers)} layers")
+    
+    def _generate_layer_data(self) -> str:
+        """
+        Generate JavaScript data structure for all layers.
+        
+        Returns:
+            JavaScript code defining the layers data
+        """
+        js_layers = []
+        
+        for layer_idx, layer in enumerate(self.layers):
+            js_keys = []
+            for row_idx, row in enumerate(layer):
+                for col_idx, keycode in enumerate(row):
+                    if keycode == -1 or keycode == "-1":
+                        continue
+                    
+                    simplified = simplify_keycode(str(keycode))
+                    face_color, edge_color = get_key_color(simplified)
+                    
+                    js_keys.append({
+                        'row': row_idx,
+                        'col': col_idx,
+                        'keycode': simplified,
+                        'original': str(keycode),
+                        'faceColor': face_color,
+                        'edgeColor': edge_color
+                    })
+            
+            js_layers.append(js_keys)
+        
+        return str(js_layers).replace("'", '"')
+    
+    def generate_html(self, output_file: str, static_image_filename: str = None) -> None:
+        """
+        Generate interactive HTML visualization.
+        
+        Args:
+            output_file: Path to save the HTML file
+            static_image_filename: Optional filename of static PNG image
+        """
+        logger.info(f"Generating interactive HTML visualization: {output_file}")
+        
+        layers_data = self._generate_layer_data()
+        
+        html_content = f"""<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Keyboard Layout</title>
+    <style>
+        * {{
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }}
+        
+        body {{
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }}
+        
+        .container {{
+            max-width: 1400px;
+            margin: 0 auto;
+        }}
+        
+        .header {{
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }}
+        
+        .header h1 {{
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }}
+        
+        .controls {{
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+        }}
+        
+        .layer-selector {{
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+        }}
+        
+        .layer-btn {{
+            padding: 10px 20px;
+            border: 2px solid #667eea;
+            background: white;
+            color: #667eea;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+        }}
+        
+        .layer-btn:hover {{
+            background: #f0f0ff;
+        }}
+        
+        .layer-btn.active {{
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }}
+        
+        .action-buttons {{
+            display: flex;
+            gap: 10px;
+        }}
+        
+        .btn {{
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+            text-decoration: none;
+            display: inline-block;
+        }}
+        
+        .btn-primary {{
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }}
+        
+        .btn-primary:hover {{
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        }}
+        
+        .btn-secondary {{
+            background: #6c757d;
+            color: white;
+        }}
+        
+        .btn-secondary:hover {{
+            background: #5a6268;
+        }}
+        
+        .keyboard {{
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            overflow-x: auto;
+        }}
+        
+        .keyboard-grid {{
+            display: inline-block;
+            min-width: fit-content;
+        }}
+        
+        .all-layers-grid {{
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 20px;
+            padding: 10px;
+        }}
+        
+        .layer-container {{
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            border: 2px solid #e0e0e0;
+        }}
+        
+        .layer-container.active {{
+            border-color: #667eea;
+            box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.2);
+        }}
+        
+        .layer-title {{
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #667eea;
+            margin-bottom: 15px;
+            text-align: center;
+        }}
+        
+        .layer-keyboard {{
+            transform: scale(0.7);
+            transform-origin: top center;
+        }}
+        
+        .keyboard-row {{
+            display: flex;
+            margin-bottom: 5px;
+        }}
+        
+        .key {{
+            width: 60px;
+            height: 60px;
+            margin: 2px;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            font-weight: 600;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            word-wrap: break-word;
+            padding: 4px;
+            position: relative;
+        }}
+        
+        .key:hover {{
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }}
+        
+        .key:active {{
+            transform: translateY(-1px);
+        }}
+        
+        .key-tooltip {{
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.9);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 10px;
+            white-space: nowrap;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s;
+            margin-bottom: 5px;
+            z-index: 1000;
+        }}
+        
+        .key:hover .key-tooltip {{
+            opacity: 1;
+        }}
+        
+        .legend {{
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            margin-top: 20px;
+        }}
+        
+        .legend h3 {{
+            color: #667eea;
+            margin-bottom: 15px;
+        }}
+        
+        .legend-grid {{
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }}
+        
+        .legend-item {{
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }}
+        
+        .legend-color {{
+            width: 30px;
+            height: 30px;
+            border-radius: 6px;
+        }}
+        
+        .info-box {{
+            background: rgba(255,255,255,0.95);
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+            border-left: 4px solid #667eea;
+        }}
+        
+        @media (max-width: 768px) {{
+            .controls {{
+                flex-direction: column;
+            }}
+            
+            .key {{
+                width: 45px;
+                height: 45px;
+                font-size: 9px;
+            }}
+        }}
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>⌨️ Interactive Keyboard Layout</h1>
+            <p>Click on keys to see details • Switch between layers • Press 'A' to toggle all layers view</p>
+        </div>
+        
+        <div class="controls">
+            <div class="layer-selector">
+                <label style="font-weight: 600; color: #333;">View:</label>
+                <button id="viewModeBtn" class="layer-btn active" onclick="toggleViewMode()">
+                    📋 All Layers
+                </button>
+                <div style="width: 20px;"></div>
+                <label style="font-weight: 600; color: #333;">Layer:</label>
+                <div id="layerButtons"></div>
+            </div>
+            
+            <div class="action-buttons">
+                {"<a href='/download/" + static_image_filename + "' class='btn btn-primary'>📥 Download PNG</a>" if static_image_filename else ""}
+                {"<a href='/view/" + static_image_filename + "' target='_blank' class='btn btn-secondary'>🖼️ View Static Image</a>" if static_image_filename else ""}
+                <button onclick="window.print()" class="btn btn-secondary">🖨️ Print</button>
+            </div>
+        </div>
+        
+        <div class="keyboard">
+            <div class="keyboard-grid" id="keyboardGrid"></div>
+        </div>
+        
+        <div class="info-box" id="keyInfo" style="display: none;">
+            <strong>Selected Key:</strong> <span id="keyDetails"></span>
+        </div>
+        
+        <div class="legend">
+            <h3>Key Legend</h3>
+            <div class="legend-grid">
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #f0f0f0; border: 2px solid #cccccc;"></div>
+                    <span>Transparent (▽)</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #ffcccc; border: 2px solid #cc0000;"></div>
+                    <span>Layer Keys (MO, LT)</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #ccccff; border: 2px solid #0000cc;"></div>
+                    <span>Layer Change (DF)</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #ffffcc; border: 2px solid #cccc00;"></div>
+                    <span>Modifier Combos (⇧⌃⌥⌘)</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #e0e0e0; border: 2px solid #666666;"></div>
+                    <span>Regular Keys</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        const layers = {layers_data};
+        const maxRows = {self.max_rows};
+        const maxCols = {self.max_cols};
+        let currentLayer = 0;
+        let viewMode = 'single'; // 'single' or 'all'
+        
+        function initializeLayerButtons() {{
+            const container = document.getElementById('layerButtons');
+            for (let i = 0; i < layers.length; i++) {{
+                const btn = document.createElement('button');
+                btn.className = 'layer-btn' + (i === 0 ? ' active' : '');
+                btn.textContent = `Layer ${{i}}`;
+                btn.onclick = () => switchLayer(i);
+                container.appendChild(btn);
+            }}
+        }}
+        
+        function toggleViewMode() {{
+            viewMode = viewMode === 'single' ? 'all' : 'single';
+            const btn = document.getElementById('viewModeBtn');
+            const layerButtons = document.getElementById('layerButtons');
+            
+            if (viewMode === 'all') {{
+                btn.textContent = '📄 Single Layer';
+                btn.classList.remove('active');
+                layerButtons.style.display = 'none';
+                renderAllLayers();
+            }} else {{
+                btn.textContent = '📋 All Layers';
+                btn.classList.add('active');
+                layerButtons.style.display = 'flex';
+                renderLayer(currentLayer);
+            }}
+        }}
+        
+        function switchLayer(layerIndex) {{
+            currentLayer = layerIndex;
+            viewMode = 'single';
+            
+            // Update view mode button
+            const viewBtn = document.getElementById('viewModeBtn');
+            viewBtn.textContent = '📋 All Layers';
+            viewBtn.classList.add('active');
+            document.getElementById('layerButtons').style.display = 'flex';
+            
+            // Update button states
+            document.querySelectorAll('#layerButtons .layer-btn').forEach((btn, idx) => {{
+                btn.classList.toggle('active', idx === layerIndex);
+            }});
+            
+            // Render the layer
+            renderLayer(layerIndex);
+        }}
+        
+        function createKeyboardGrid(layer, layerIndex = null) {{
+            const keyGrid = Array(maxRows).fill(null).map(() => Array(maxCols).fill(null));
+            
+            // Place keys in the grid
+            layer.forEach(key => {{
+                keyGrid[key.row][key.col] = key;
+            }});
+            
+            // Create grid element
+            const gridDiv = document.createElement('div');
+            gridDiv.className = 'keyboard-grid';
+            
+            // Render the grid
+            keyGrid.forEach(row => {{
+                const rowDiv = document.createElement('div');
+                rowDiv.className = 'keyboard-row';
+                
+                row.forEach(key => {{
+                    const keyDiv = document.createElement('div');
+                    keyDiv.className = 'key';
+                    
+                    if (key) {{
+                        keyDiv.style.backgroundColor = key.faceColor;
+                        keyDiv.style.border = `2px solid ${{key.edgeColor}}`;
+                        keyDiv.textContent = key.keycode;
+                        
+                        // Add tooltip
+                        const tooltip = document.createElement('div');
+                        tooltip.className = 'key-tooltip';
+                        tooltip.textContent = key.original;
+                        keyDiv.appendChild(tooltip);
+                        
+                        // Add click handler
+                        const keyInfo = layerIndex !== null ? 
+                            `${{key.keycode}} (Layer ${{layerIndex}}, Original: ${{key.original}}, Row ${{key.row}}, Col ${{key.col}})` :
+                            key;
+                        keyDiv.onclick = () => showKeyInfo(typeof keyInfo === 'string' ? {{
+                            keycode: key.keycode,
+                            original: key.original,
+                            row: key.row,
+                            col: key.col,
+                            layer: layerIndex
+                        }} : keyInfo);
+                    }} else {{
+                        keyDiv.style.visibility = 'hidden';
+                    }}
+                    
+                    rowDiv.appendChild(keyDiv);
+                }});
+                
+                gridDiv.appendChild(rowDiv);
+            }});
+            
+            return gridDiv;
+        }}
+        
+        function renderLayer(layerIndex) {{
+            const grid = document.getElementById('keyboardGrid');
+            grid.innerHTML = '';
+            grid.className = 'keyboard-grid';
+            
+            const layer = layers[layerIndex];
+            const keyboardGrid = createKeyboardGrid(layer);
+            grid.appendChild(keyboardGrid);
+        }}
+        
+        function renderAllLayers() {{
+            const grid = document.getElementById('keyboardGrid');
+            grid.innerHTML = '';
+            grid.className = 'all-layers-grid';
+            
+            layers.forEach((layer, index) => {{
+                const container = document.createElement('div');
+                container.className = 'layer-container';
+                container.id = `layer-container-${{index}}`;
+                
+                const title = document.createElement('div');
+                title.className = 'layer-title';
+                title.textContent = `Layer ${{index}}`;
+                title.style.cursor = 'pointer';
+                title.onclick = () => {{
+                    // Highlight this layer
+                    document.querySelectorAll('.layer-container').forEach(c => c.classList.remove('active'));
+                    container.classList.add('active');
+                    
+                    // Scroll to this layer
+                    container.scrollIntoView({{ behavior: 'smooth', block: 'center' }});
+                }};
+                
+                const keyboardWrapper = document.createElement('div');
+                keyboardWrapper.className = 'layer-keyboard';
+                const keyboardGrid = createKeyboardGrid(layer, index);
+                keyboardWrapper.appendChild(keyboardGrid);
+                
+                container.appendChild(title);
+                container.appendChild(keyboardWrapper);
+                grid.appendChild(container);
+            }});
+        }}
+        
+        function showKeyInfo(key) {{
+            const infoBox = document.getElementById('keyInfo');
+            const details = document.getElementById('keyDetails');
+            
+            const layerInfo = key.layer !== null && key.layer !== undefined ? 
+                `Layer ${{key.layer}} - ` : '';
+            
+            details.innerHTML = `
+                ${{layerInfo}}<strong>${{key.keycode}}</strong> 
+                (Original: <code>${{key.original}}</code>) 
+                - Position: Row ${{key.row}}, Col ${{key.col}}
+            `;
+            infoBox.style.display = 'block';
+        }}
+        
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', () => {{
+            initializeLayerButtons();
+            renderLayer(0);
+        }});
+        
+        // Keyboard shortcuts
+        document.addEventListener('keydown', (e) => {{
+            if (e.key >= '0' && e.key <= '9') {{
+                const layerNum = parseInt(e.key);
+                if (layerNum < layers.length) {{
+                    switchLayer(layerNum);
+                }}
+            }} else if (e.key === 'ArrowLeft') {{
+                if (viewMode === 'single') {{
+                    switchLayer(Math.max(0, currentLayer - 1));
+                }}
+            }} else if (e.key === 'ArrowRight') {{
+                if (viewMode === 'single') {{
+                    switchLayer(Math.min(layers.length - 1, currentLayer + 1));
+                }}
+            }} else if (e.key === 'a' || e.key === 'A') {{
+                toggleViewMode();
+            }}
+        }});
+    </script>
+</body>
+</html>"""
+        
+        with open(output_file, 'w', encoding='utf-8') as f:
+            f.write(html_content)
+        
+        logger.info(f"Interactive HTML visualization saved to {output_file}")
+
